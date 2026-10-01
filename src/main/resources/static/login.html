@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in | Inventory System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="center">
+    <main class="card login-card">
+        <h1>Inventory System</h1>
+        <p class="muted">Log in to manage inventory and sales.</p>
+
+        <p id="message" class="alert" hidden></p>
+
+        <!-- Spring Security handles POST /login and checks the password -->
+        <form method="post" action="/login">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required autofocus>
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+            <button type="submit">Log in</button>
+        </form>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(location.search);
+        const msg = document.getElementById("message");
+        if (params.has("error")) {
+            msg.textContent = "Wrong username or password.";
+            msg.className = "alert error";
+            msg.hidden = false;
+        } else if (params.has("logout")) {
+            msg.textContent = "You have been logged out.";
+            msg.className = "alert success";
+            msg.hidden = false;
+        }
+    </script>
+</body>
+</html>

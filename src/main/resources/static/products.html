@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Products | Inventory System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/index.html"><strong>Inventory System</strong></a>
+        <span id="who" class="muted"></span>
+        <form method="post" action="/logout"><button class="link">Log out</button></form>
+    </header>
+
+    <main class="container">
+        <h1>Products</h1>
+        <a class="button" href="/product-form.html" data-admin-only>+ Add product</a>
+
+        <!--
+            TODO (Maria, stories 2-3): product table.
+            1. fetch("/api/products") once Walker's endpoint exists -> list of products (JSON)
+            2. render rows: name, SKU, category, price, quantity
+            3. Admin only: Edit button -> /product-form.html?id=<id>, Delete button -> DELETE /api/products/<id>
+               (put data-admin-only on those buttons so Staff never sees them)
+        -->
+        <p class="muted">Product list coming in Sprint 1.</p>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        loadCurrentUser().then(me => {
+            document.getElementById("who").textContent = me.username + " (" + me.role + ")";
+        });
+    </script>
+</body>
+</html>

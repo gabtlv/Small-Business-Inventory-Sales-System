@@ -1,0 +1,19 @@
+# Build output
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Your local settings (database password) - never commit
+application-local.properties
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
