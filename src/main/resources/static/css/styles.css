@@ -11,6 +11,8 @@
     --error-text: #b42318;
     --success-bg: #e8f6ee;
     --success-text: #067647;
+    --warning-bg: #fff6e5;
+    --warning-text: #93370d;
 }
 
 * { box-sizing: border-box; }
@@ -67,6 +69,7 @@ button.link { margin: 0; padding: 0; background: none; color: var(--accent); fon
 .alert { padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; }
 .alert.error { background: var(--error-bg); color: var(--error-text); }
 .alert.success { background: var(--success-bg); color: var(--success-text); }
+.alert.warning { background: var(--warning-bg); color: var(--warning-text); }
 
 /* Home tiles */
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
@@ -81,3 +84,22 @@ a.tile:hover { border-color: var(--accent); }
 table { width: 100%; border-collapse: collapse; background: var(--card); margin-top: 16px; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
 th { font-size: 0.85rem; color: var(--muted); }
+
+button:disabled { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+button.secondary { background: var(--card); color: var(--accent); border: 1px solid var(--border); }
+button.secondary:hover { background: var(--bg); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Checkout (story 5) */
+fieldset { border: none; margin: 0; padding: 0; min-width: 0; }
+.table-scroll { overflow-x: auto; }
+th.num, td.num { text-align: right; white-space: nowrap; }
+td select { min-width: 180px; }
+input.qty { width: 90px; }
+.field-error { display: block; margin-top: 4px; color: var(--error-text); font-size: 0.8rem; }
+.sale-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+.sale-actions button { margin-top: 0; }
+.sale-total { font-size: 1.25rem; }
+.panel-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.panel-actions button { margin-top: 0; }
+#reload-actions .alert { flex-basis: 100%; margin: 0; }

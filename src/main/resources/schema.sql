@@ -47,3 +47,15 @@ CREATE TABLE IF NOT EXISTS sale_items (
     CONSTRAINT fk_items_sale    FOREIGN KEY (sale_id)    REFERENCES sales (id),
     CONSTRAINT fk_items_product FOREIGN KEY (product_id) REFERENCES products (id)
 );
+
+-- Story 5: each checkout attempt sends a random key. If the response gets lost and the
+-- cashier retries with the same key, the server returns the original sale instead of
+-- recording it twice. (A separate table, so existing databases pick it up without changes.)
+CREATE TABLE IF NOT EXISTS sale_request_keys (
+    request_key VARCHAR(64) PRIMARY KEY,
+    user_id     BIGINT    NOT NULL,
+    sale_id     BIGINT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_keys_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_keys_sale FOREIGN KEY (sale_id) REFERENCES sales (id)
+);
