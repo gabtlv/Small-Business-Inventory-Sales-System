@@ -18,7 +18,12 @@ async function api(url, options = {}) {
         throw new Error("Not logged in");
     }
     if (!res.ok) {
-        throw new Error(`${res.status} ${res.statusText}`);
+        // Use the server's {"error": "..."} message if it sent one
+        const body = await res.json().catch(() => null);
+        const err = new Error((body && body.error) || `${res.status} ${res.statusText}`);
+        err.status = res.status;
+        err.body = body;
+        throw err;
     }
     return res.status === 204 ? null : res.json();
 }

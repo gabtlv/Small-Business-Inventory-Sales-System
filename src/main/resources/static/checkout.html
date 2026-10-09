@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout | Inventory System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/index.html"><strong>Inventory System</strong></a>
+        <span id="who" class="muted"></span>
+        <form method="post" action="/logout"><button class="link">Log out</button></form>
+    </header>
+
+    <main class="container">
+        <!-- Story 5: record a sale. Admin and Staff (enforced in SecurityConfig). -->
+        <h1>Checkout</h1>
+
+        <p id="message" class="alert" role="status" hidden></p>
+
+        <!-- Shown when we can't tell whether the last sale was saved (e.g. connection lost) -->
+        <div id="uncertain-actions" class="panel-actions" hidden>
+            <button type="button" id="check-sale">Check again</button>
+            <button type="button" id="discard-sale" class="secondary">Discard and start a new sale</button>
+        </div>
+
+        <!-- Shown when stock levels couldn't be loaded; checkout stays locked until they are -->
+        <div id="reload-actions" class="panel-actions" hidden>
+            <p id="reload-message" class="alert warning" role="status"></p>
+            <button type="button" id="reload-products">Reload products</button>
+        </div>
+
+        <p id="loading" class="muted">Loading products…</p>
+        <p id="no-products" class="muted" hidden>
+            There are no products yet. An Admin needs to add products before sales can be recorded.
+        </p>
+
+        <fieldset id="sale-form" hidden>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="num">Price</th>
+                            <th class="num">In stock</th>
+                            <th>Quantity</th>
+                            <th class="num">Line total</th>
+                            <th><span class="visually-hidden">Remove</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lines"></tbody>
+                </table>
+            </div>
+
+            <button type="button" id="add-line" class="secondary">+ Add item</button>
+
+            <div class="sale-actions">
+                <span class="sale-total">Total: <strong id="total">$0.00</strong></span>
+                <button type="button" id="complete-sale" disabled>Complete sale</button>
+            </div>
+            <p class="muted">Prices and stock are checked again when the sale is saved.</p>
+        </fieldset>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/checkout.js"></script>
+</body>
+</html>

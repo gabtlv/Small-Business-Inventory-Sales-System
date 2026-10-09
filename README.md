@@ -58,6 +58,8 @@ src/main/java/com/team/inventory/
   config/SecurityConfig.java  login + role rules (who can access what)
   config/DataSeeder.java      creates the demo admin/staff accounts
   controller/                 REST endpoints (/api/...)
+  service/                    business logic that needs a transaction (e.g. SaleService)
+  dto/                        request/response shapes for the API
   model/                      database entities (User, Product, ...)
   repository/                 database access
 src/main/resources/
@@ -75,7 +77,8 @@ src/test/                     JUnit tests
 | `GET /api/me` | logged in | done |
 | `GET /api/products` | Admin, Staff | Sprint 1 |
 | `POST/PUT/DELETE /api/products/{id}` | Admin | Sprint 1 |
-| `POST /api/sales` | Admin, Staff | Sprint 2 |
+| `GET /api/sales/products` | Admin, Staff | done (checkout product list: price + stock) |
+| `POST /api/sales` | Admin, Staff | done (records sale, decrements stock; optional `Idempotency-Key` header makes retries safe) |
 
 Role rules for new endpoints go in `SecurityConfig.java`.
 
@@ -86,6 +89,7 @@ Role rules for new endpoints go in `SecurityConfig.java`.
 | Project setup, database, login, roles config | Gab |
 | Product pages: `products.html`, `product-form.html` (stories 2-3) | Maria |
 | `Product` entity + `ProductController` endpoints, tests (stories 2-4) | Walker |
+| Checkout page, `POST /api/sales`, automatic stock decrement (story 5) | Jahangir |
 
 ## Workflow
 
