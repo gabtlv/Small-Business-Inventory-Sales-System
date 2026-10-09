@@ -42,7 +42,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/api/categories/**").hasRole("ADMIN")
 
-                // Sales API (story 5, Sprint 2): Admin and Staff can record sales
+                // Checkout page + Sales API (story 5): Admin and Staff can record sales
+                .requestMatchers("/checkout.html").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/api/sales/**").hasAnyRole("ADMIN", "STAFF")
 
                 // Reports + staff management (Sprints 3-4): Admin only
