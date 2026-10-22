@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sales report | Inventory System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/index.html"><strong>Inventory System</strong></a>
+        <span id="who" class="muted"></span>
+        <form method="post" action="/logout"><button class="link">Log out</button></form>
+    </header>
+
+    <main class="container">
+        <!-- Story 7: sales report. Admin only (SecurityConfig). Data: GET /api/reports/sales -->
+        <h1>Sales report</h1>
+
+        <form id="report-form" class="filters">
+            <div>
+                <label for="period">Group by</label>
+                <select id="period">
+                    <option value="daily">Day</option>
+                    <option value="weekly">Week</option>
+                    <option value="monthly">Month</option>
+                </select>
+            </div>
+            <div>
+                <label for="from">From</label>
+                <input id="from" type="date">
+            </div>
+            <div>
+                <label for="to">To</label>
+                <input id="to" type="date">
+            </div>
+            <div class="filters-button">
+                <button type="submit">Show report</button>
+            </div>
+        </form>
+        <p class="muted small">Leave the dates empty for the last 7 days / 8 weeks / 6 months.</p>
+
+        <p id="message" class="alert error" role="alert" hidden></p>
+
+        <section id="report" hidden>
+            <div class="tiles stats">
+                <div class="tile"><span class="muted">Revenue</span><strong id="revenue" class="stat"></strong></div>
+                <div class="tile"><span class="muted">Sales</span><strong id="sale-count" class="stat"></strong></div>
+                <div class="tile"><span class="muted">Items sold</span><strong id="items" class="stat"></strong></div>
+                <div class="tile"><span class="muted">Average sale</span><strong id="average" class="stat"></strong></div>
+            </div>
+
+            <h2 id="range"></h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="period-heading">Day</th>
+                            <th class="num">Sales</th>
+                            <th class="num">Items sold</th>
+                            <th class="num">Revenue</th>
+                            <th class="bar-col"><span class="visually-hidden">Revenue chart</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+
+            <h2>Top products</h2>
+            <p id="no-top" class="muted" hidden>No sales in this range.</p>
+            <table id="top-table">
+                <thead>
+                    <tr><th>Product</th><th class="num">Quantity sold</th><th class="num">Revenue</th></tr>
+                </thead>
+                <tbody id="top-rows"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/reports.js"></script>
+</body>
+</html>

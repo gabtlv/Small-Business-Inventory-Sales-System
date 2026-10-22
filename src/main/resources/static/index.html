@@ -17,6 +17,13 @@
         <h1>Home</h1>
         <p>Welcome, <span id="username"></span>. You are logged in as <strong id="role"></strong>.</p>
 
+        <!-- Story 6: low-stock alerts (Admin only; data comes from GET /api/products/low-stock) -->
+        <section id="low-stock" class="alert warning low-stock-panel" data-admin-only hidden>
+            <strong id="low-stock-title"></strong>
+            <ul id="low-stock-list"></ul>
+            <a href="/products.html">Go to products</a>
+        </section>
+
         <div class="tiles">
             <a class="tile" href="/products.html">
                 <strong>Products</strong>
@@ -31,6 +38,10 @@
                 <strong>Checkout</strong>
                 <span class="muted">Record a sale</span>
             </a>
+            <a class="tile" href="/reports.html" data-admin-only>
+                <strong>Sales report</strong>
+                <span class="muted">Daily, weekly, monthly</span>
+            </a>
         </div>
     </main>
 
@@ -40,7 +51,31 @@
             document.getElementById("username").textContent = me.username;
             document.getElementById("role").textContent = me.role;
             document.getElementById("who").textContent = me.username + " (" + me.role + ")";
+            if (me.role === "ADMIN") loadLowStock();
         });
+
+        /** Story 6: show which products need reordering. */
+        async function loadLowStock() {
+            const panel = document.getElementById("low-stock");
+            try {
+                const low = await api("/api/products/low-stock");
+                if (low.length === 0) return;
+                document.getElementById("low-stock-title").textContent =
+                    `${low.length} product${low.length === 1 ? " is" : "s are"} low on stock. Time to reorder:`;
+                document.getElementById("low-stock-list").replaceChildren(...low.map(p => {
+                    const li = document.createElement("li");
+                    li.textContent = `${p.name}${p.sku ? " (" + p.sku + ")" : ""}: ` +
+                        (p.quantity === 0 ? "out of stock" : `${p.quantity} left`) +
+                        ` (alert at ${p.lowStockThreshold})`;
+                    return li;
+                }));
+                panel.hidden = false;
+            } catch (e) {
+                document.getElementById("low-stock-title").textContent = "Couldn't check stock levels: " + e.message;
+                document.getElementById("low-stock-list").replaceChildren();
+                panel.hidden = false;
+            }
+        }
     </script>
 </body>
 </html>

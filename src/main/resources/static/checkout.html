@@ -37,6 +37,13 @@
         </p>
 
         <fieldset id="sale-form" hidden>
+            <!-- Story 9: find a product by name or SKU and add it to the sale -->
+            <div class="quick-add">
+                <label for="quick-search">Find product by name or SKU</label>
+                <input id="quick-search" type="search" placeholder="Type a name or SKU, then press Enter to add" autocomplete="off">
+                <ul id="quick-results" class="quick-results" aria-label="Matching products"></ul>
+            </div>
+
             <div class="table-scroll">
                 <table>
                     <thead>

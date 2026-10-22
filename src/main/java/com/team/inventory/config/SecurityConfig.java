@@ -32,9 +32,12 @@ public class SecurityConfig {
                 .requestMatchers("/login.html", "/css/**", "/js/**", "/error").permitAll()
 
                 // Admin-only pages
-                .requestMatchers("/product-form.html").hasRole("ADMIN")
+                .requestMatchers("/product-form.html", "/reports.html").hasRole("ADMIN")
 
-                // Products API (stories 2, 3): everyone logged in can view, only Admin can change
+                // Low-stock alerts (story 6): Admin only. Must come before the general products GET rule.
+                .requestMatchers("/api/products/low-stock").hasRole("ADMIN")
+
+                // Products API (stories 2, 3, 9): everyone logged in can view/search, only Admin can change
                 .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/api/products/**").hasRole("ADMIN")
 

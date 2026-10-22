@@ -297,6 +297,86 @@ async function discardPendingSale() {
     await reloadProducts();
 }
 
+// ---- Story 9: quick search by name or SKU ----
+
+const quickInput = document.getElementById("quick-search");
+const quickResults = document.getElementById("quick-results");
+const MAX_MATCHES = 6;
+
+/** Products whose name or SKU contains the text; exact SKU matches first. */
+function findProducts(text) {
+    const q = text.trim().toLowerCase();
+    if (!q) return [];
+    const matches = [...products.values()].filter(p =>
+        p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q)));
+    matches.sort((a, b) => {
+        const exactA = a.sku && a.sku.toLowerCase() === q ? 0 : 1;
+        const exactB = b.sku && b.sku.toLowerCase() === q ? 0 : 1;
+        return exactA - exactB || a.name.localeCompare(b.name);
+    });
+    return matches;
+}
+
+/** Adds one of the product: bumps its existing row, fills an empty row, or adds a new row. */
+function addProductToSale(productId) {
+    const id = String(productId);
+    const existing = lines.find(l => l.productId === id);
+    if (existing) {
+        existing.quantity = String((isWholeNumber(existing.quantity) ? Number(existing.quantity) : 0) + 1);
+    } else {
+        const empty = lines.find(l => !l.productId);
+        if (empty) {
+            empty.productId = id;
+        } else {
+            lines.push({ productId: id, quantity: "1" });
+        }
+    }
+    setLines([...lines]);
+    quickInput.value = "";
+    renderQuickResults();
+    quickInput.focus();
+}
+
+function renderQuickResults() {
+    const matches = findProducts(quickInput.value);
+    if (quickInput.value.trim() && matches.length === 0) {
+        const li = document.createElement("li");
+        li.className = "muted";
+        li.style.padding = "8px 12px";
+        li.textContent = "No products match.";
+        quickResults.replaceChildren(li);
+        return;
+    }
+    quickResults.replaceChildren(...matches.slice(0, MAX_MATCHES).map(p => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const left = document.createElement("span");
+        left.textContent = p.sku ? `${p.name} (${p.sku})` : p.name;
+        const right = document.createElement("span");
+        right.className = "muted";
+        right.textContent = p.quantity > 0 ? `${formatCents(toCents(p.price))} · ${p.quantity} in stock` : "out of stock";
+        btn.append(left, right);
+        btn.disabled = p.quantity <= 0;
+        btn.addEventListener("click", () => addProductToSale(p.id));
+        li.append(btn);
+        return li;
+    }));
+}
+
+quickInput.addEventListener("input", renderQuickResults);
+quickInput.addEventListener("keydown", e => {
+    if (e.key === "Escape") { quickInput.value = ""; renderQuickResults(); return; }
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const matches = findProducts(quickInput.value).filter(p => p.quantity > 0);
+    const q = quickInput.value.trim().toLowerCase();
+    const exact = matches.find(p => p.sku && p.sku.toLowerCase() === q);
+    if (exact) addProductToSale(exact.id);
+    else if (matches.length === 1) addProductToSale(matches[0].id);
+    // Several matches: leave the list open so the cashier can pick one
+});
+
 document.getElementById("add-line").addEventListener("click", () => setLines([...lines, newLine()]));
 completeBtn.addEventListener("click", completeSale);
 checkBtn.addEventListener("click", checkAgain);
