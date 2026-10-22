@@ -75,8 +75,13 @@ src/test/                     JUnit tests
 |---|---|---|
 | `POST /login`, `POST /logout` | anyone | done |
 | `GET /api/me` | logged in | done |
-| `GET /api/products` | Admin, Staff | Sprint 1 |
-| `POST/PUT/DELETE /api/products/{id}` | Admin | Sprint 1 |
+| `GET /api/products?q=&categoryId=` | Admin, Staff | done (search by name/SKU, filter by category) |
+| `GET /api/products/{id}` | Admin, Staff | done |
+| `POST /api/products`, `PUT/DELETE /api/products/{id}` | Admin | done (delete refused if the product has sales) |
+| `GET /api/products/low-stock` | Admin | done (quantity at or below each product's threshold) |
+| `GET /api/categories` | Admin, Staff | done |
+| `POST /api/categories`, `DELETE /api/categories/{id}` | Admin | done (deleting keeps products, uncategorized) |
+| `GET /api/reports/sales?period=daily\|weekly\|monthly&from=&to=` | Admin | done |
 | `GET /api/sales/products` | Admin, Staff | done (checkout product list: price + stock) |
 | `POST /api/sales` | Admin, Staff | done (records sale, decrements stock; optional `Idempotency-Key` header makes retries safe) |
 

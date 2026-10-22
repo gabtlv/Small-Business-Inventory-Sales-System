@@ -13,25 +13,122 @@
         <form method="post" action="/logout"><button class="link">Log out</button></form>
     </header>
 
-    <main class="container">
-        <h1>Add / edit product</h1>
-        <!-- This page is Admin-only (enforced in SecurityConfig). -->
+    <main class="container narrow">
+        <!-- This page is Admin-only (enforced in SecurityConfig). Stories 2, 3, 6, 8. -->
+        <p><a href="/products.html">← Back to products</a></p>
+        <h1 id="title">Add product</h1>
 
-        <!--
-            TODO (Maria, stories 2-3): product form.
-            Fields: name, sku, price, quantity, category, low stock threshold.
-            - Add:  POST /api/products        with JSON body
-            - Edit: if ?id= is in the URL, load GET /api/products/<id>, then PUT /api/products/<id>
-            On success, go back to /products.html.
-        -->
-        <p class="muted">Product form coming in Sprint 1.</p>
+        <p id="message" class="alert error" role="alert" hidden></p>
+
+        <form id="product-form" class="card" novalidate>
+            <fieldset id="fields">
+                <label for="name">Name</label>
+                <input id="name" name="name" maxlength="150" required>
+
+                <label for="sku">SKU <span class="muted">(optional, must be unique)</span></label>
+                <input id="sku" name="sku" maxlength="50">
+
+                <div class="two-col">
+                    <div>
+                        <label for="price">Price ($)</label>
+                        <input id="price" name="price" type="number" min="0" step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="quantity">Quantity in stock</label>
+                        <input id="quantity" name="quantity" type="number" min="0" step="1" required>
+                    </div>
+                </div>
+
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">No category</option>
+                </select>
+                <span class="muted small">Add categories on the <a href="/products.html">Products</a> page.</span>
+
+                <label for="threshold">Low stock alert at</label>
+                <input id="threshold" name="threshold" type="number" min="0" step="1" value="5" required>
+                <span class="muted small">You'll see an alert when quantity is at or below this number.</span>
+
+                <button type="submit" id="save">Save product</button>
+            </fieldset>
+        </form>
     </main>
 
     <script src="/js/app.js"></script>
     <script>
-        loadCurrentUser().then(me => {
-            document.getElementById("who").textContent = me.username + " (" + me.role + ")";
+        const id = new URLSearchParams(location.search).get("id");
+        const form = document.getElementById("product-form");
+        const messageEl = document.getElementById("message");
+        const field = name => document.getElementById(name);
+
+        function showError(text) {
+            messageEl.textContent = text;
+            messageEl.hidden = !text;
+        }
+
+        function isWholeNumber(v) { return /^\d+$/.test(v.trim()); }
+
+        /** Client-side checks mirror the server's, so mistakes show before saving. */
+        function validate() {
+            if (!field("name").value.trim()) return "Name is required.";
+            const price = field("price").value.trim();
+            if (!/^\d+(\.\d{1,2})?$/.test(price)) return "Price must be a number with at most 2 decimal places.";
+            if (!isWholeNumber(field("quantity").value)) return "Quantity must be a whole number (0 or more).";
+            if (!isWholeNumber(field("threshold").value)) return "Low stock alert must be a whole number (0 or more).";
+            return "";
+        }
+
+        async function init() {
+            const me = await loadCurrentUser();
+            field("who").textContent = me.username + " (" + me.role + ")";
+
+            const cats = await api("/api/categories");
+            field("category").append(...cats.map(c => new Option(c.name, String(c.id))));
+
+            if (id) {
+                document.title = "Edit product | Inventory System";
+                field("title").textContent = "Edit product";
+                try {
+                    const p = await api("/api/products/" + encodeURIComponent(id));
+                    field("name").value = p.name;
+                    field("sku").value = p.sku || "";
+                    field("price").value = Number(p.price).toFixed(2);
+                    field("quantity").value = p.quantity;
+                    field("category").value = p.categoryId == null ? "" : String(p.categoryId);
+                    field("threshold").value = p.lowStockThreshold;
+                } catch (e) {
+                    showError("Couldn't load this product: " + e.message);
+                    field("fields").disabled = true;
+                }
+            }
+        }
+
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+            const problem = validate();
+            if (problem) { showError(problem); return; }
+            showError("");
+
+            const body = {
+                name: field("name").value.trim(),
+                sku: field("sku").value.trim() || null,
+                price: Number(field("price").value.trim()),
+                quantity: Number(field("quantity").value),
+                categoryId: field("category").value ? Number(field("category").value) : null,
+                lowStockThreshold: Number(field("threshold").value),
+            };
+            field("fields").disabled = true;
+            try {
+                await api(id ? "/api/products/" + encodeURIComponent(id) : "/api/products",
+                    { method: id ? "PUT" : "POST", body });
+                location.href = "/products.html?saved=1";
+            } catch (err) {
+                showError(err.message);
+                field("fields").disabled = false;
+            }
         });
+
+        init().catch(e => showError(e.message));
     </script>
 </body>
 </html>
