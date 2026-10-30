@@ -12,11 +12,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
- * Turns errors from the product, category and report APIs into {"error": "readable message"},
+ * Turns errors from the product, category, report and staff APIs into {"error": "readable message"},
  * the same shape checkout uses, so app.js's api() helper can show them.
  * (SaleController keeps its own handlers; this only covers the controllers listed here.)
  */
-@RestControllerAdvice(assignableTypes = {ProductController.class, CategoryController.class, ReportController.class})
+@RestControllerAdvice(assignableTypes = {ProductController.class, CategoryController.class, ReportController.class,
+    StaffController.class})
 public class ApiExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
