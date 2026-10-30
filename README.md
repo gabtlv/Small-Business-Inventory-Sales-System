@@ -84,8 +84,26 @@ src/test/                     JUnit tests
 | `GET /api/reports/sales?period=daily\|weekly\|monthly&from=&to=` | Admin | done |
 | `GET /api/sales/products` | Admin, Staff | done (checkout product list: price + stock) |
 | `POST /api/sales` | Admin, Staff | done (records sale, decrements stock; optional `Idempotency-Key` header makes retries safe) |
+| `GET /api/users` | Admin | done (active Staff accounts: id + username, never passwords) |
+| `POST /api/users` | Admin | done (`{username, password}`; always creates a Staff account) |
+| `DELETE /api/users/{id}` | Admin | done (removes a Staff account; their sales are kept) |
 
 Role rules for new endpoints go in `SecurityConfig.java`.
+
+## Staff management (Sprint 3)
+
+Admin opens **Staff** on the home page (`/staff.html`) to see Staff accounts, add one
+(username + password; it's always a Staff account) or remove one. Staff can't open the page or
+use `/api/users`.
+
+Removing an account doesn't delete it, because its sales still point at it. Instead it's listed in
+the `deactivated_users` table: the person can't log in, and if they're already logged in their
+session ends on their next click. Their past sales stay in the reports, and the username can't be
+reused. (The table is created automatically on startup; existing databases don't need changes.)
+
+**Try it:** log in as `admin`, open **Staff**, add `jamie` / `secret1`. In a private window, log in
+as `jamie` and open **Checkout**. Back as admin, remove `jamie`. Jamie's next click goes to the
+login page, and logging in as `jamie` again fails. Tests: `StaffManagementTests`.
 
 ## Sprint 1 ownership
 

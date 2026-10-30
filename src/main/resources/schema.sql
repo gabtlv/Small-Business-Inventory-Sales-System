@@ -59,3 +59,13 @@ CREATE TABLE IF NOT EXISTS sale_request_keys (
     CONSTRAINT fk_keys_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_keys_sale FOREIGN KEY (sale_id) REFERENCES sales (id)
 );
+
+-- Sprint 3: staff management. Removing a staff account adds a row here instead of deleting
+-- the user, so their past sales (sales.user_id) stay intact. A removed account can't log in,
+-- and any session it still has is ended. (A separate table, so existing databases pick it up
+-- without changes.)
+CREATE TABLE IF NOT EXISTS deactivated_users (
+    user_id        BIGINT PRIMARY KEY,
+    deactivated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_deactivated_user FOREIGN KEY (user_id) REFERENCES users (id)
+);
