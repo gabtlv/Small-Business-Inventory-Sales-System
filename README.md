@@ -1,6 +1,6 @@
 # Small Business Inventory & Sales System
 
-CPS714 course project. Team: Maria Habib, Walker Egsgard, Gab Talavera.
+CPS714 course project. Team: Maria Habib, Walker Egsgard, Gab Talavera, Jahangir Khan.
 
 A web app for small retail businesses to manage inventory, record sales and view reports.
 Two roles: **Admin** (business owner) and **Staff** (cashier).
@@ -82,6 +82,8 @@ src/test/                     JUnit tests
 | `GET /api/categories` | Admin, Staff | done |
 | `POST /api/categories`, `DELETE /api/categories/{id}` | Admin | done (deleting keeps products, uncategorized) |
 | `GET /api/reports/sales?period=daily\|weekly\|monthly&from=&to=` | Admin | done |
+| `GET /api/reports/sales/export?period=&from=&to=` | Admin | done (same report as a CSV download) |
+| `GET /api/dashboard/summary` | Admin | done (last 30 days: total sales, number of sales, top products, low-stock count) |
 | `GET /api/sales/products` | Admin, Staff | done (checkout product list: price + stock) |
 | `POST /api/sales` | Admin, Staff | done (records sale, decrements stock; optional `Idempotency-Key` header makes retries safe) |
 | `GET /api/users` | Admin | done (active Staff accounts: id + username, never passwords) |
@@ -119,3 +121,12 @@ login page, and logging in as `jamie` again fails. Tests: `StaffManagementTests`
 - Pull before you start: `git pull`
 - Work on a branch: `git checkout -b feature/product-form`
 - Commit small, push, open a pull request into `main`
+
+## Sprint 3 ownership
+
+| Area | Owner |
+|---|---|
+| Report export (US-10) | Gab |
+| Staff account management (US-11) | Jahangir |
+| Dashboard summary (US-12) | Maria |
+| Testing and edits | Walker |
