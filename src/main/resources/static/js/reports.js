@@ -12,12 +12,18 @@ function cell(content, className) {
     return td;
 }
 
-async function loadReport() {
+/** The period and date range currently chosen in the form (used by both the report and the CSV export). */
+function reportParams() {
     const params = new URLSearchParams({ period: document.getElementById("period").value });
     const from = document.getElementById("from").value;
     const to = document.getElementById("to").value;
     if (from) params.set("from", from);
     if (to) params.set("to", to);
+    return params;
+}
+
+async function loadReport() {
+    const params = reportParams();
 
     messageEl.hidden = true;
     formEl.querySelector("button").disabled = true;
@@ -66,7 +72,39 @@ function render(r) {
     document.getElementById("report").hidden = false;
 }
 
+/** Story 10: download the report the form is set to as a CSV file. */
+async function exportCsv() {
+    const button = document.getElementById("export-csv");
+    messageEl.hidden = true;
+    button.disabled = true;
+    try {
+        const res = await fetch("/api/reports/sales/export?" + reportParams());
+        if (res.status === 401) {
+            location.href = "/login.html";
+            return;
+        }
+        if (!res.ok) {
+            const body = await res.json().catch(() => null);
+            throw new Error((body && body.error) || `${res.status} ${res.statusText}`);
+        }
+        const match = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") || "");
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(await res.blob());
+        link.download = match ? match[1] : "sales-report.csv";
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(link.href);
+    } catch (e) {
+        messageEl.textContent = "Couldn't export the report: " + e.message;
+        messageEl.hidden = false;
+    } finally {
+        button.disabled = false;
+    }
+}
+
 formEl.addEventListener("submit", e => { e.preventDefault(); loadReport(); });
+document.getElementById("export-csv").addEventListener("click", exportCsv);
 // Changing the grouping resets to that grouping's default range
 document.getElementById("period").addEventListener("change", () => {
     document.getElementById("from").value = "";

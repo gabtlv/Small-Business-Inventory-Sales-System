@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .requestMatchers("/login.html", "/css/**", "/js/**", "/error").permitAll()
 
                 // Admin-only pages
-                .requestMatchers("/product-form.html", "/reports.html", "/staff.html").hasRole("ADMIN")
+                .requestMatchers("/product-form.html", "/reports.html", "/staff.html", "/dashboard.html").hasRole("ADMIN")
 
                 // Low-stock alerts (story 6): Admin only. Must come before the general products GET rule.
                 .requestMatchers("/api/products/low-stock").hasRole("ADMIN")
@@ -51,8 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/checkout.html").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/api/sales/**").hasAnyRole("ADMIN", "STAFF")
 
-                // Reports + staff management (Sprint 3): Admin only
-                .requestMatchers("/api/reports/**", "/api/users/**").hasRole("ADMIN")
+                // Reports, staff management and dashboard (Sprint 3): Admin only
+                .requestMatchers("/api/reports/**", "/api/users/**", "/api/dashboard/**").hasRole("ADMIN")
 
                 // Everything else just needs a login
                 .anyRequest().authenticated()
