@@ -14,7 +14,7 @@
     </header>
 
     <main class="container">
-        <!-- Story 7: sales report. Admin only (SecurityConfig). Data: GET /api/reports/sales -->
+        <!-- Story 7: sales report. Admin only (SecurityConfig). Data: GET /api/reports/sales (CSV: /api/reports/sales/export) -->
         <h1>Sales report</h1>
 
         <form id="report-form" class="filters">
@@ -36,6 +36,10 @@
             </div>
             <div class="filters-button">
                 <button type="submit">Show report</button>
+            </div>
+            <div class="filters-button">
+                <!-- Story 10: downloads the same report as a CSV file -->
+                <button type="button" id="export-csv">Export CSV</button>
             </div>
         </form>
         <p class="muted small">Leave the dates empty for the last 7 days / 8 weeks / 6 months.</p>
