@@ -1,6 +1,6 @@
 # Small Business Inventory & Sales System
 
-CPS714 course project. Team: Maria Habib, Walker Egsgard, Gab Talavera.
+CPS714 course project. Team: Maria Habib, Walker Egsgard, Gab Talavera, Jahangir Khan.
 
 A web app for small retail businesses to manage inventory, record sales and view reports.
 Two roles: **Admin** (business owner) and **Staff** (cashier).
