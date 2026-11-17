@@ -1,0 +1,19 @@
+# Files Docker should NOT copy into the image build.
+
+# Your local database password: must never end up inside an image
+application-local.properties
+
+# Build output and tooling (the image builds its own target/)
+target/
+.git/
+.github/
+.idea/
+.vscode/
+*.iml
+
+# Not needed to build the app
+Documentation/
+README.md
+Dockerfile
+docker-compose.yml
+.dockerignore

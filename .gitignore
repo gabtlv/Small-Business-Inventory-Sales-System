@@ -17,3 +17,6 @@ application-local.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker Compose passwords (see docker-compose.yml) - never commit
+.env
