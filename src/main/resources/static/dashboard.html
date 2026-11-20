@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard | Inventory System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/index.html"><strong>Inventory System</strong></a>
+        <span id="who" class="muted"></span>
+        <form method="post" action="/logout"><button class="link">Log out</button></form>
+    </header>
+
+    <main class="container">
+        <!-- Story 12: dashboard summary. Admin only (SecurityConfig). Data: GET /api/dashboard/summary -->
+        <h1>Dashboard</h1>
+        <p id="range" class="muted"></p>
+
+        <p id="message" class="alert error" role="alert" hidden></p>
+
+        <section id="dashboard" hidden>
+            <div class="tiles stats">
+                <div class="tile"><span class="muted">Total sales</span><strong id="total-sales" class="stat"></strong></div>
+                <div class="tile"><span class="muted">Number of sales</span><strong id="sale-count" class="stat"></strong></div>
+                <a class="tile" href="/products.html"><span class="muted">Low stock products</span><strong id="low-stock" class="stat"></strong></a>
+            </div>
+
+            <h2>Top products</h2>
+            <p id="no-top" class="muted" hidden>No sales in this period.</p>
+            <table id="top-table">
+                <thead>
+                    <tr><th>Product</th><th class="num">Quantity sold</th><th class="num">Revenue</th></tr>
+                </thead>
+                <tbody id="top-rows"></tbody>
+            </table>
+
+            <p><a href="/reports.html">See the full sales report</a></p>
+        </section>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.team.inventory.config;
 
+import com.team.inventory.repository.DeactivatedUserRepository;
 import com.team.inventory.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 /**
@@ -23,7 +25,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, DeactivatedUserRepository deactivated) throws Exception {
         LoginUrlAuthenticationEntryPoint loginPage = new LoginUrlAuthenticationEntryPoint("/login.html");
 
         http
@@ -32,9 +34,12 @@ public class SecurityConfig {
                 .requestMatchers("/login.html", "/css/**", "/js/**", "/error").permitAll()
 
                 // Admin-only pages
-                .requestMatchers("/product-form.html").hasRole("ADMIN")
+                .requestMatchers("/product-form.html", "/reports.html", "/staff.html", "/dashboard.html").hasRole("ADMIN")
 
-                // Products API (stories 2, 3): everyone logged in can view, only Admin can change
+                // Low-stock alerts (story 6): Admin only. Must come before the general products GET rule.
+                .requestMatchers("/api/products/low-stock").hasRole("ADMIN")
+
+                // Products API (stories 2, 3, 9): everyone logged in can view/search, only Admin can change
                 .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/api/products/**").hasRole("ADMIN")
 
@@ -46,8 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/checkout.html").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/api/sales/**").hasAnyRole("ADMIN", "STAFF")
 
-                // Reports + staff management (Sprints 3-4): Admin only
-                .requestMatchers("/api/reports/**", "/api/users/**").hasRole("ADMIN")
+                // Reports, staff management and dashboard (Sprint 3): Admin only
+                .requestMatchers("/api/reports/**", "/api/users/**", "/api/dashboard/**").hasRole("ADMIN")
 
                 // Everything else just needs a login
                 .anyRequest().authenticated()
@@ -72,6 +77,8 @@ public class SecurityConfig {
                     loginPage.commence(request, response, authException);
                 }
             }))
+            // Staff management (Sprint 3): a removed account's existing session is ended on its next request
+            .addFilterBefore(new DeactivatedAccountFilter(deactivated), AuthorizationFilter.class)
             // CSRF protection is off to keep the plain HTML/JS frontend simple (fine for a local
             // course project). Turn it back on before deploying anywhere public.
             .csrf(csrf -> csrf.disable());
@@ -79,14 +86,15 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Loads a user from the database when someone logs in. */
+    /** Loads a user from the database when someone logs in. Removed staff accounts are disabled. */
     @Bean
-    public UserDetailsService userDetailsService(UserRepository users) {
+    public UserDetailsService userDetailsService(UserRepository users, DeactivatedUserRepository deactivated) {
         return username -> users.findByUsername(username)
             .map(u -> org.springframework.security.core.userdetails.User
                 .withUsername(u.getUsername())
                 .password(u.getPasswordHash())
                 .roles(u.getRole().name())
+                .disabled(deactivated.existsById(u.getId()))
                 .build())
             .orElseThrow(() -> new UsernameNotFoundException("No user " + username));
     }

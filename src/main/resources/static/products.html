@@ -14,24 +14,62 @@
     </header>
 
     <main class="container">
-        <h1>Products</h1>
-        <a class="button" href="/product-form.html" data-admin-only>+ Add product</a>
+        <div class="page-head">
+            <h1>Products</h1>
+            <a class="button" href="/product-form.html" data-admin-only>+ Add product</a>
+        </div>
 
-        <!--
-            TODO (Maria, stories 2-3): product table.
-            1. fetch("/api/products") once Walker's endpoint exists -> list of products (JSON)
-            2. render rows: name, SKU, category, price, quantity
-            3. Admin only: Edit button -> /product-form.html?id=<id>, Delete button -> DELETE /api/products/<id>
-               (put data-admin-only on those buttons so Staff never sees them)
-        -->
-        <p class="muted">Product list coming in Sprint 1.</p>
+        <p id="message" class="alert" role="status" hidden></p>
+
+        <!-- Story 9: search by name or SKU. Story 8: filter by category. -->
+        <div class="filters">
+            <div class="grow">
+                <label for="search">Search by name or SKU</label>
+                <input id="search" type="search" placeholder="e.g. mug or SKU-1001" autocomplete="off">
+            </div>
+            <div>
+                <label for="category-filter">Category</label>
+                <select id="category-filter">
+                    <option value="">All categories</option>
+                </select>
+            </div>
+        </div>
+
+        <p id="result-count" class="muted" aria-live="polite"></p>
+
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>SKU</th>
+                        <th>Category</th>
+                        <th class="num">Price</th>
+                        <th class="num">Quantity</th>
+                        <th data-admin-only><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+            </table>
+        </div>
+        <p id="empty" class="muted" hidden></p>
+
+        <!-- Story 8: Admin manages the category list -->
+        <section class="card section" data-admin-only>
+            <h2>Categories</h2>
+            <form id="category-form" class="inline-form">
+                <div class="grow">
+                    <label for="category-name">New category</label>
+                    <input id="category-name" maxlength="100" placeholder="e.g. Drinkware" required>
+                </div>
+                <button type="submit">Add category</button>
+            </form>
+            <ul id="category-list" class="chip-list"></ul>
+            <p class="muted small">Deleting a category keeps its products; they just become uncategorized.</p>
+        </section>
     </main>
 
     <script src="/js/app.js"></script>
-    <script>
-        loadCurrentUser().then(me => {
-            document.getElementById("who").textContent = me.username + " (" + me.role + ")";
-        });
-    </script>
+    <script src="/js/products.js"></script>
 </body>
 </html>

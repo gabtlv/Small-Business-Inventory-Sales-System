@@ -1,0 +1,53 @@
+# Runs the whole system with one command:  docker compose up --build
+# Then open http://localhost:8081 and log in (admin / admin123, staff / staff123).
+#
+#   db   - MySQL 8, with the `inventory` database created on first start
+#   app  - this Spring Boot app, built from the Dockerfile
+#
+# Not using Docker? Nothing changes: keep using application-local.properties and ./mvnw spring-boot:run.
+#
+# Passwords below are dev defaults. To use your own, create a `.env` file next to this one, e.g.
+#   MYSQL_ROOT_PASSWORD=something
+#   MYSQL_PASSWORD=something-else
+
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: inventory
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-dev-password}
+      # A separate account just for the app, with access to the inventory database only
+      MYSQL_USER: inventory
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-inventory-dev-password}
+    volumes:
+      # Data lives in a named volume, so it survives `docker compose down` and restarts.
+      # `docker compose down -v` deletes it (fresh database next time).
+      - mysql-data:/var/lib/mysql
+    ports:
+      # 3307 on your machine, so it doesn't clash with a MySQL you already run on 3306.
+      # Connect from MySQL Workbench with host 127.0.0.1, port 3307.
+      - "3307:3306"
+    healthcheck:
+      # "Healthy" once MySQL accepts connections; the app waits for this before starting
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # "db" is the MySQL container's name on the network Docker Compose creates
+      DB_URL: jdbc:mysql://db:3306/inventory?allowPublicKeyRetrieval=true&useSSL=false
+      DB_USERNAME: inventory
+      DB_PASSWORD: ${MYSQL_PASSWORD:-inventory-dev-password}
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
