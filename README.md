@@ -18,6 +18,7 @@ Two roles: **Admin** (business owner) and **Staff** (cashier).
 | Tests | JUnit + MockMvc, in-memory H2 database |
 | CI | GitHub Actions runs `./mvnw test` on every push to `main` and every pull request |
 | Docker | `Dockerfile` + `docker-compose.yml` (app + MySQL 8) |
+| Deployment | Google Kubernetes Engine (Autopilot), Artifact Registry, auto-deploy from GitHub Actions (see [DEPLOY.md](DEPLOY.md)) |
 
 ## Run it with Docker (no Java or MySQL install needed)
 
@@ -47,6 +48,15 @@ MYSQL_PASSWORD=your-app-password
 
 Not using Docker? Nothing changes: follow **Run it locally** below. `application-local.properties`
 works exactly as before, and Docker never copies it into an image (see `.dockerignore`).
+
+## Deploy to Google Cloud (Kubernetes)
+
+The app runs on Google Kubernetes Engine for the final presentation: the app and MySQL as pods,
+behind a load balancer with a public IP. Pushes to `main` that pass CI are deployed automatically.
+Step-by-step setup, costs, and how to tear it down: **[DEPLOY.md](DEPLOY.md)**.
+
+The deployed site does **not** use the dev passwords below: its Admin/Staff passwords are set
+with Kubernetes secrets (`APP_SEED_ADMIN_PASSWORD` / `APP_SEED_STAFF_PASSWORD`).
 
 ## Run it locally
 
