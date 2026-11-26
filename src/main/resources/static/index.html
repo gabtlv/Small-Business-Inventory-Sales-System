@@ -14,74 +14,173 @@
     </header>
 
     <main class="container">
-        <h1>Home</h1>
-        <p>Welcome, <span id="username"></span>. You are logged in as <strong id="role"></strong>.</p>
+        <div class="page-head">
+            <div>
+                <h1>Home</h1>
+                <p class="muted">Welcome, <span id="username"></span>. You are logged in as <strong id="role"></strong>.</p>
+            </div>
+            <!-- data-admin-only: removed for Staff by app.js -->
+            <a class="button secondary" href="/product-form.html" data-admin-only>+ Add product</a>
+            <a class="button" href="/checkout.html">Record a sale</a>
+        </div>
 
-        <!-- Story 6: low-stock alerts (Admin only; data comes from GET /api/products/low-stock) -->
-        <section id="low-stock" class="alert warning low-stock-panel" data-admin-only hidden>
-            <strong id="low-stock-title"></strong>
-            <ul id="low-stock-list"></ul>
-            <a href="/products.html">Go to products</a>
+        <!-- Story 12: last 30 days at a glance (Admin only; GET /api/dashboard/summary) -->
+        <section class="card section" data-admin-only>
+            <h2>Sales overview <span id="range" class="muted small"></span></h2>
+            <p id="overview-error" class="alert error" hidden></p>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="label">Total sales</span>
+                    <strong id="total-sales" class="value">–</strong>
+                    <span class="muted small">Last 30 days</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Number of sales</span>
+                    <strong id="sale-count" class="value">–</strong>
+                    <span class="muted small">Last 30 days</span>
+                </div>
+                <a class="stat-card tile" href="/products.html">
+                    <span class="label">Low-stock products</span>
+                    <strong id="low-stock-count" class="value">–</strong>
+                    <span class="muted small">At or below their alert level</span>
+                </a>
+            </div>
         </section>
 
-        <div class="tiles">
-            <a class="tile" href="/products.html">
-                <strong>Products</strong>
-                <span class="muted">View inventory</span>
-            </a>
-            <!-- data-admin-only: hidden for Staff by app.js -->
-            <a class="tile" href="/product-form.html" data-admin-only>
-                <strong>Add product</strong>
-                <span class="muted">Admin only</span>
-            </a>
+        <div class="home-grid" data-admin-only>
+            <!-- Story 6: low-stock alerts (GET /api/products/low-stock) -->
+            <section id="low-stock" class="card section">
+                <div class="section-head">
+                    <h2>Low stock</h2>
+                    <a href="/products.html">View all products</a>
+                </div>
+                <p id="low-stock-title" class="muted small"></p>
+                <ul id="low-stock-list" class="stock-list"></ul>
+            </section>
+
+            <!-- Story 12: best sellers from the same summary -->
+            <section class="card section">
+                <div class="section-head">
+                    <h2>Top products</h2>
+                    <a href="/reports.html">Full report</a>
+                </div>
+                <p id="no-top" class="muted small" hidden>No sales in the last 30 days yet.</p>
+                <table id="top-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th><span class="visually-hidden">Share of revenue</span></th>
+                            <th class="num">Sold</th>
+                            <th class="num">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-rows"></tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- Staff home: their two main tasks (removed for Admin, who gets the dashboard above) -->
+        <div class="tiles" data-staff-only>
             <a class="tile" href="/checkout.html">
                 <strong>Checkout</strong>
                 <span class="muted">Record a sale</span>
             </a>
-            <a class="tile" href="/reports.html" data-admin-only>
-                <strong>Sales report</strong>
-                <span class="muted">Daily, weekly, monthly</span>
-            </a>
-            <a class="tile" href="/dashboard.html" data-admin-only>
-                <strong>Dashboard</strong>
-                <span class="muted">Sales, top products, low stock</span>
-            </a>
-            <a class="tile" href="/staff.html" data-admin-only>
-                <strong>Staff</strong>
-                <span class="muted">Add or remove staff accounts</span>
+            <a class="tile" href="/products.html">
+                <strong>Products</strong>
+                <span class="muted">Look up items and stock</span>
             </a>
         </div>
     </main>
 
     <script src="/js/app.js"></script>
     <script>
+        const money = v => "$" + Number(v).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
         loadCurrentUser().then(me => {
             document.getElementById("username").textContent = me.username;
             document.getElementById("role").textContent = me.role;
             document.getElementById("who").textContent = me.username + " (" + me.role + ")";
-            if (me.role === "ADMIN") loadLowStock();
+            if (me.role === "ADMIN") {
+                document.querySelectorAll("[data-staff-only]").forEach(el => el.remove());
+                loadOverview();
+                loadLowStock();
+            }
         });
+
+        /** Story 12: totals, top products and low-stock count for the last 30 days. */
+        async function loadOverview() {
+            try {
+                const d = await api("/api/dashboard/summary");
+                document.getElementById("range").textContent = `(${d.from} to ${d.to})`;
+                document.getElementById("total-sales").textContent = money(d.totalSales);
+                document.getElementById("sale-count").textContent = d.saleCount;
+                document.getElementById("low-stock-count").textContent = d.lowStockCount;
+
+                const top = d.topProducts;
+                const best = Math.max(...top.map(p => Number(p.revenue)), 0);
+                document.getElementById("no-top").hidden = top.length > 0;
+                document.getElementById("top-table").hidden = top.length === 0;
+                document.getElementById("top-rows").replaceChildren(...top.map(p => {
+                    const tr = document.createElement("tr");
+                    const name = document.createElement("td");
+                    name.textContent = p.name;
+                    const share = document.createElement("td");
+                    share.className = "share";
+                    const track = document.createElement("span");
+                    track.className = "track";
+                    const bar = document.createElement("span");
+                    bar.className = "bar";
+                    bar.style.width = (best > 0 ? Math.max(2, Number(p.revenue) / best * 100) : 0) + "%";
+                    track.append(bar);
+                    share.append(track);
+                    const sold = document.createElement("td");
+                    sold.className = "num";
+                    sold.textContent = p.quantitySold;
+                    const revenue = document.createElement("td");
+                    revenue.className = "num";
+                    revenue.textContent = money(p.revenue);
+                    tr.append(name, share, sold, revenue);
+                    return tr;
+                }));
+            } catch (e) {
+                const err = document.getElementById("overview-error");
+                err.textContent = "Couldn't load the sales overview: " + e.message;
+                err.hidden = false;
+            }
+        }
 
         /** Story 6: show which products need reordering. */
         async function loadLowStock() {
-            const panel = document.getElementById("low-stock");
+            const title = document.getElementById("low-stock-title");
+            const list = document.getElementById("low-stock-list");
             try {
                 const low = await api("/api/products/low-stock");
-                if (low.length === 0) return;
-                document.getElementById("low-stock-title").textContent =
-                    `${low.length} product${low.length === 1 ? " is" : "s are"} low on stock. Time to reorder:`;
-                document.getElementById("low-stock-list").replaceChildren(...low.map(p => {
+                if (low.length === 0) {
+                    title.textContent = "All products are above their alert level.";
+                    list.replaceChildren();
+                    return;
+                }
+                title.textContent = `${low.length} product${low.length === 1 ? " is" : "s are"} low on stock. Time to reorder:`;
+                list.replaceChildren(...low.map(p => {
                     const li = document.createElement("li");
-                    li.textContent = `${p.name}${p.sku ? " (" + p.sku + ")" : ""}: ` +
-                        (p.quantity === 0 ? "out of stock" : `${p.quantity} left`) +
-                        ` (alert at ${p.lowStockThreshold})`;
+                    const name = document.createElement("span");
+                    name.className = "name";
+                    const strong = document.createElement("strong");
+                    strong.textContent = p.name;
+                    const detail = document.createElement("span");
+                    detail.className = "muted small";
+                    detail.textContent = (p.sku ? p.sku + " · " : "") +
+                        `${p.quantity} left · alert at ${p.lowStockThreshold}`;
+                    name.append(strong, detail);
+                    const badge = document.createElement("span");
+                    badge.className = p.quantity === 0 ? "badge danger" : "badge warning";
+                    badge.textContent = p.quantity === 0 ? "Out of stock" : "Low";
+                    li.append(name, badge);
                     return li;
                 }));
-                panel.hidden = false;
             } catch (e) {
-                document.getElementById("low-stock-title").textContent = "Couldn't check stock levels: " + e.message;
-                document.getElementById("low-stock-list").replaceChildren();
-                panel.hidden = false;
+                title.textContent = "Couldn't check stock levels: " + e.message;
+                list.replaceChildren();
             }
         }
     </script>
