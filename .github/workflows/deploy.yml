@@ -1,0 +1,81 @@
+# Continuous deployment to Google Kubernetes Engine (GKE).
+#
+# Runs after the CI workflow finishes successfully on main, so only tested code is deployed.
+# It builds the Docker image, pushes it to Artifact Registry, and rolls it out to the cluster.
+#
+# Signs in to Google Cloud with Workload Identity Federation: GitHub proves who it is with a
+# short-lived token, so no Google password or key file is stored in GitHub.
+#
+# Setup (once): DEPLOY.md, "Automatic deploys". Settings come from repository *variables*
+# (Settings -> Secrets and variables -> Actions -> Variables). None of them are secret.
+# If GKE_CLUSTER isn't set (e.g. after the cluster is deleted), this workflow does nothing.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:          # "Run workflow" button in the Actions tab
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false   # never stop a deploy halfway
+
+jobs:
+  deploy:
+    if: >-
+      vars.GKE_CLUSTER != '' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write         # lets GitHub issue the token Google Cloud trusts
+
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      CLUSTER: ${{ vars.GKE_CLUSTER }}
+      IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/inventory/app:${{ github.event.workflow_run.head_sha || github.sha }}
+
+    steps:
+      - name: Check out the commit that passed CI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Sign in to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push the image
+        run: |
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Connect to the cluster
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ vars.GKE_CLUSTER }}
+          location: ${{ vars.GCP_REGION }}
+
+      - name: Deploy
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/mysql.yaml
+          sed "s|IMAGE_PLACEHOLDER|$IMAGE|" k8s/app.yaml | kubectl apply -f -
+          # Waits for the new version to pass its health checks; fails the run if it doesn't
+          kubectl rollout status deployment/inventory-app -n inventory --timeout=10m
+
+      - name: Show the address
+        run: |
+          IP=$(kubectl get service inventory-app -n inventory -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "Deployed $IMAGE"
+          echo "### Deployed to http://$IP" >> "$GITHUB_STEP_SUMMARY"
