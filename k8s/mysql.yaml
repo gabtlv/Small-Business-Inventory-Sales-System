@@ -1,0 +1,94 @@
+# MySQL 8 inside the cluster.
+#
+# StatefulSet (not Deployment) because a database needs a stable identity and its own disk:
+# the PersistentVolumeClaim below survives pod restarts, so data isn't lost when the pod moves.
+#
+# Passwords come from the `inventory-secrets` Secret, created by hand (see DEPLOY.md),
+# so they are never committed to git.
+
+# Stable in-cluster address for the app: mysql:3306 (only reachable inside the cluster)
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: inventory
+  labels:
+    app: mysql
+spec:
+  clusterIP: None            # "headless": DNS points straight at the MySQL pod
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: inventory
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      # Spot capacity: ~70% cheaper. Google can reclaim the node; Kubernetes then restarts the
+      # pod elsewhere and it re-attaches the same disk. Fine for a course demo.
+      nodeSelector:
+        cloud.google.com/gke-spot: "true"
+      terminationGracePeriodSeconds: 25
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: inventory
+            - name: MYSQL_USER
+              value: inventory
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: inventory-secrets
+                  key: db-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: inventory-secrets
+                  key: db-root-password
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 1Gi
+          # Ready = accepting connections. Until then the app won't get traffic routed to MySQL.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\" --silent"]
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+              # Google's disks contain a lost+found folder; MySQL refuses to start in a
+              # non-empty directory, so use a subfolder of the disk.
+              subPath: mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
