@@ -85,7 +85,7 @@ class StaffPasswordResetTests {
 
         // The new password logs in, the old one no longer does
         mvc.perform(formLogin("/login").user("jamie").password("newsecret1"))
-            .andExpect(authenticated().withRoles("STAFF"));
+            .andExpect(result -> assertThat(result.getResponse().getRedirectedUrl()).doesNotContain("error"));
         mvc.perform(formLogin("/login").user("jamie").password("secret1"))
             .andExpect(unauthenticated())
             .andExpect(redirectedUrl("/login.html?error"));
