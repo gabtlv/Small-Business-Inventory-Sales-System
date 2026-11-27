@@ -3,6 +3,7 @@ package com.team.inventory.controller;
 import com.team.inventory.dto.SalesReport;
 import com.team.inventory.service.SalesReportService;
 import com.team.inventory.service.SalesReportCsv;
+import com.team.inventory.service.SalesReportPdf;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  * All parameters are optional; dates are inclusive (yyyy-MM-dd).
  *
  * GET /api/reports/sales/export takes the same parameters and returns the report as a CSV file
- * download (story 10).
+ * download (story 10). GET /api/reports/sales/export/pdf returns the same report as a PDF.
  */
 @RestController
 @RequestMapping("/api/reports")
@@ -50,5 +51,18 @@ public class ReportController {
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
             .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
             .body(SalesReportCsv.toCsv(report));
+    }
+
+    @GetMapping("/sales/export/pdf")
+    public ResponseEntity<byte[]> exportSalesPdf(@RequestParam(required = false) String period,
+                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        LocalDate today = LocalDate.now();
+        SalesReport report = reports.report(SalesReportService.parsePeriod(period), from, to, today);
+        String filename = "sales-report-" + report.from() + "-to-" + report.to() + ".pdf";
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+            .contentType(MediaType.APPLICATION_PDF)
+            .body(SalesReportPdf.toPdf(report, today));
     }
 }
