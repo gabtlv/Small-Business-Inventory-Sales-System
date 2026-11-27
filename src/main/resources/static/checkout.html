@@ -37,36 +37,34 @@
         </p>
 
         <fieldset id="sale-form" hidden>
-            <!-- Story 9: find a product by name or SKU and add it to the sale -->
-            <div class="quick-add">
-                <label for="quick-search">Find product by name or SKU</label>
-                <input id="quick-search" type="search" placeholder="Type a name or SKU, then press Enter to add" autocomplete="off">
-                <ul id="quick-results" class="quick-results" aria-label="Matching products"></ul>
-            </div>
+            <div class="checkout-layout">
+                <!-- Story 9: find a product by name or SKU (Enter adds it), or click its card -->
+                <section class="checkout-products">
+                    <div class="quick-add">
+                        <label for="quick-search">Find product by name or SKU</label>
+                        <input id="quick-search" type="search" placeholder="Type a name or SKU, then press Enter to add" autocomplete="off" autofocus>
+                    </div>
+                    <p id="no-matches" class="muted" hidden>No products match.</p>
+                    <div id="product-grid" class="product-grid" aria-label="Products"></div>
+                </section>
 
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th class="num">Price</th>
-                            <th class="num">In stock</th>
-                            <th>Quantity</th>
-                            <th class="num">Line total</th>
-                            <th><span class="visually-hidden">Remove</span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="lines"></tbody>
-                </table>
+                <!-- The sale being built -->
+                <aside class="cart card" aria-labelledby="cart-title">
+                    <div class="cart-head">
+                        <h2 id="cart-title">Current sale</h2>
+                        <span id="cart-count" class="muted small"></span>
+                    </div>
+                    <p id="cart-empty" class="muted">No items yet. Search or click a product to add it.</p>
+                    <ul id="lines" class="cart-lines"></ul>
+                    <div class="cart-total">
+                        <span>Total</span>
+                        <strong id="total" aria-live="polite">$0.00</strong>
+                    </div>
+                    <button type="button" id="complete-sale" class="cart-complete" disabled>Complete sale</button>
+                    <button type="button" id="clear-sale" class="link cart-clear">Clear sale</button>
+                    <p class="muted small">Prices and stock are checked again when the sale is saved.</p>
+                </aside>
             </div>
-
-            <button type="button" id="add-line" class="secondary">+ Add item</button>
-
-            <div class="sale-actions">
-                <span class="sale-total">Total: <strong id="total">$0.00</strong></span>
-                <button type="button" id="complete-sale" disabled>Complete sale</button>
-            </div>
-            <p class="muted">Prices and stock are checked again when the sale is saved.</p>
         </fieldset>
     </main>
 
