@@ -1,5 +1,6 @@
 package com.team.inventory.controller;
 
+import com.team.inventory.dto.PasswordResetRequest;
 import com.team.inventory.dto.StaffDto;
 import com.team.inventory.dto.StaffRequest;
 import com.team.inventory.service.StaffService;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
  * GET    /api/users       -> [{id, username}] of active Staff accounts
  * POST   /api/users       -> 201 + the new Staff account ({username, password}; always role STAFF)
  * DELETE /api/users/{id}  -> 204; the account can't log in any more, its sales are kept
+ * PUT    /api/users/{id}/password -> 204; sets a new password ({password}) for that Staff account (Sprint 4)
  */
 @RestController
 @RequestMapping("/api/users")
@@ -45,6 +48,12 @@ public class StaffController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> remove(@PathVariable long id) {
         service.remove(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<Void> resetPassword(@PathVariable long id, @Valid @RequestBody PasswordResetRequest request) {
+        service.resetPassword(id, request);
         return ResponseEntity.noContent().build();
     }
 }

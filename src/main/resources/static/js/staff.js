@@ -1,4 +1,5 @@
 // Staff management page (Sprint 3): list, add and remove Staff accounts. Admin only.
+// Sprint 4: reset a Staff account's password.
 
 const formEl = document.getElementById("staff-form");
 const messageEl = document.getElementById("message");
@@ -32,6 +33,12 @@ function buildRow(s) {
     const name = document.createElement("td");
     name.textContent = s.username;
 
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "link";
+    reset.textContent = "Reset password";
+    reset.addEventListener("click", () => openResetDialog(s));
+
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "link danger";
@@ -39,7 +46,7 @@ function buildRow(s) {
     remove.addEventListener("click", () => removeStaff(s, remove));
     const actions = document.createElement("td");
     actions.className = "row-actions";
-    actions.append(remove);
+    actions.append(reset, remove);
 
     tr.append(name, actions);
     return tr;
@@ -56,6 +63,45 @@ async function removeStaff(s, button) {
     }
     await loadStaff();
 }
+
+// ---- Reset password (Sprint 4) ----
+
+const resetDialog = document.getElementById("reset-dialog");
+const resetForm = document.getElementById("reset-form");
+const resetPasswordEl = document.getElementById("reset-password");
+let resetTarget = null;
+
+function openResetDialog(s) {
+    resetTarget = s;
+    document.getElementById("reset-title").textContent = `Reset password for ${s.username}`;
+    resetForm.reset();
+    resetDialog.showModal();
+    resetPasswordEl.focus();
+}
+
+document.getElementById("reset-cancel").addEventListener("click", () => resetDialog.close());
+
+resetForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!resetTarget) return;
+    const button = resetForm.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+        await api(`/api/users/${resetTarget.id}/password`, {
+            method: "PUT",
+            body: { password: resetPasswordEl.value },
+        });
+        resetDialog.close();
+        showMessage(`Password reset for ${resetTarget.username}.`, "success");
+    } catch (e) {
+        resetDialog.close();
+        showMessage(e.message, "error");
+        await loadStaff();   // e.g. the account was removed in the meantime
+    } finally {
+        button.disabled = false;
+        resetTarget = null;
+    }
+});
 
 formEl.addEventListener("submit", async event => {
     event.preventDefault();
