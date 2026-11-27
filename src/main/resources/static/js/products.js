@@ -69,7 +69,7 @@ function buildRow(p) {
     const qty = cell(String(p.quantity), "num");
     if (p.lowStock) {
         const badge = document.createElement("span");
-        badge.className = "badge warning";
+        badge.className = "badge danger stock-alert";
         badge.textContent = p.quantity === 0 ? "Out of stock" : "Low stock";
         badge.title = `Reorder at ${p.lowStockThreshold} or fewer`;
         qty.prepend(badge, " ");

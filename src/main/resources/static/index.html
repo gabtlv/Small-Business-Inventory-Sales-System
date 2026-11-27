@@ -173,7 +173,7 @@
                         `${p.quantity} left · alert at ${p.lowStockThreshold}`;
                     name.append(strong, detail);
                     const badge = document.createElement("span");
-                    badge.className = p.quantity === 0 ? "badge danger" : "badge warning";
+                    badge.className = "badge danger stock-alert";
                     badge.textContent = p.quantity === 0 ? "Out of stock" : "Low";
                     li.append(name, badge);
                     return li;
