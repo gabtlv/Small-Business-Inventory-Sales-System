@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
-import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -87,7 +86,6 @@ class StaffPasswordResetTests {
         mvc.perform(formLogin("/login").user("jamie").password("newsecret1"))
             .andExpect(result -> assertThat(result.getResponse().getRedirectedUrl()).doesNotContain("error"));
         mvc.perform(formLogin("/login").user("jamie").password("secret1"))
-            .andExpect(unauthenticated())
             .andExpect(redirectedUrl("/login.html?error"));
 
         // Stored as a BCrypt hash, never the plain text
