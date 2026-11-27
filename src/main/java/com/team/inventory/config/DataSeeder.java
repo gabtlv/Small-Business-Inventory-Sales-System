@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +15,10 @@ import org.springframework.stereotype.Component;
  * Creates one Admin and one Staff account on startup if they don't exist yet,
  * so everyone on the team can log in right away.
  *
- * DEV ONLY: change these passwords (or remove this class) before any real use.
+ * Passwords default to admin123 / staff123 for local development and tests. Anywhere public
+ * (e.g. the Kubernetes deployment, see DEPLOY.md) they MUST be overridden with the environment
+ * variables APP_SEED_ADMIN_PASSWORD and APP_SEED_STAFF_PASSWORD (Spring maps them to the
+ * app.seed.* properties below). Only used when the account is first created.
  */
 @Component
 public class DataSeeder implements ApplicationRunner {
@@ -23,16 +27,22 @@ public class DataSeeder implements ApplicationRunner {
 
     private final UserRepository users;
     private final PasswordEncoder encoder;
+    private final String adminPassword;
+    private final String staffPassword;
 
-    public DataSeeder(UserRepository users, PasswordEncoder encoder) {
+    public DataSeeder(UserRepository users, PasswordEncoder encoder,
+                      @Value("${app.seed.admin-password:admin123}") String adminPassword,
+                      @Value("${app.seed.staff-password:staff123}") String staffPassword) {
         this.users = users;
         this.encoder = encoder;
+        this.adminPassword = adminPassword;
+        this.staffPassword = staffPassword;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        createIfMissing("admin", "admin123", Role.ADMIN);
-        createIfMissing("staff", "staff123", Role.STAFF);
+        createIfMissing("admin", adminPassword, Role.ADMIN);
+        createIfMissing("staff", staffPassword, Role.STAFF);
     }
 
     private void createIfMissing(String username, String rawPassword, Role role) {

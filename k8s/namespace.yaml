@@ -1,0 +1,6 @@
+# Everything for this app lives in its own namespace, so it's easy to see and to delete:
+#   kubectl delete namespace inventory
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inventory

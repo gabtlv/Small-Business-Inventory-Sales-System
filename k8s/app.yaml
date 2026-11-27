@@ -1,0 +1,120 @@
+# The Spring Boot app and its public address.
+#
+# IMAGE_PLACEHOLDER is replaced with the real image (Artifact Registry path + git commit) when
+# deploying, by DEPLOY.md's commands or the GitHub Actions deploy workflow.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-app
+  namespace: inventory
+  labels:
+    app: inventory-app
+spec:
+  # One copy: login sessions are kept in the app's memory, so a second copy wouldn't know
+  # about them. (To scale out, store sessions in the database with Spring Session first.)
+  replicas: 1
+  # Start the new version before stopping the old one, so deploys have no downtime
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: inventory-app
+  template:
+    metadata:
+      labels:
+        app: inventory-app
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-spot: "true"
+      terminationGracePeriodSeconds: 25
+      # Wait until MySQL accepts connections before starting the app
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z mysql 3306; do echo waiting for mysql; sleep 3; done"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+      containers:
+        - name: app
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - name: http
+              containerPort: 8081
+          env:
+            # The app already reads these (application.properties); same as docker-compose.yml
+            - name: DB_URL
+              value: jdbc:mysql://mysql:3306/inventory?allowPublicKeyRetrieval=true&useSSL=false
+            - name: DB_USERNAME
+              value: inventory
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: inventory-secrets
+                  key: db-password
+            # Replace the dev passwords admin123 / staff123 (DataSeeder)
+            - name: APP_SEED_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: inventory-secrets
+                  key: admin-password
+            - name: APP_SEED_STAFF_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: inventory-secrets
+                  key: staff-password
+            # Let Java use most of the pod's memory, but not more than the pod has
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 1Gi
+          # /login.html is public, so it answers 200 without logging in.
+          # startupProbe: give Spring Boot up to ~3 minutes to start on a small CPU.
+          startupProbe:
+            httpGet:
+              path: /login.html
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          # readinessProbe: only send users to the pod when it answers
+          readinessProbe:
+            httpGet:
+              path: /login.html
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+          # livenessProbe: restart the app if it stops answering for ~1 minute
+          livenessProbe:
+            httpGet:
+              path: /login.html
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+# Public address. GKE creates a Google Cloud load balancer with an external IP:
+#   kubectl get service inventory-app -n inventory   (EXTERNAL-IP column)
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-app
+  namespace: inventory
+spec:
+  type: LoadBalancer
+  # Keep each visitor on the same pod (matters if replicas are ever raised above 1)
+  sessionAffinity: ClientIP
+  selector:
+    app: inventory-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
