@@ -138,6 +138,7 @@ src/test/                     JUnit tests
 | `GET /api/users` | Admin | done (active Staff accounts: id + username, never passwords) |
 | `POST /api/users` | Admin | done (`{username, password}`; always creates a Staff account) |
 | `DELETE /api/users/{id}` | Admin | done (removes a Staff account; their sales are kept) |
+| `PUT /api/users/{id}/password` | Admin | done (`{password}`; sets a new password for a Staff account) |
 
 Role rules for new endpoints go in `SecurityConfig.java`.
 

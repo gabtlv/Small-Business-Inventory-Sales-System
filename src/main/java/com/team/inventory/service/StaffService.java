@@ -1,5 +1,6 @@
 package com.team.inventory.service;
 
+import com.team.inventory.dto.PasswordResetRequest;
 import com.team.inventory.dto.StaffDto;
 import com.team.inventory.dto.StaffRequest;
 import com.team.inventory.model.DeactivatedUser;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Staff management (Sprint 3): Admin lists, adds and removes Staff accounts.
+ * Sprint 4 adds resetting a Staff account's password.
  *
  * Removing doesn't delete the user (their sales point at them); it marks the account as
  * deactivated, which blocks login and ends any session it still has (see SecurityConfig).
@@ -62,6 +64,19 @@ public class StaffService {
             .filter(u -> u.getRole() == Role.STAFF && !deactivated.existsById(u.getId()))
             .orElseThrow(() -> ApiException.notFound("Staff account not found. It may have been removed already."));
         deactivated.save(new DeactivatedUser(user.getId()));
+    }
+
+    /** Sets a new password for an active Staff account. Admin accounts and removed accounts can't be reset here. */
+    @Transactional
+    public void resetPassword(long id, PasswordResetRequest request) {
+        if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw ApiException.badRequest("Password is too long.");   // BCrypt only uses 72 bytes
+        }
+        User user = users.findById(id)
+            .filter(u -> u.getRole() == Role.STAFF && !deactivated.existsById(u.getId()))
+            .orElseThrow(() -> ApiException.notFound("Staff account not found. It may have been removed already."));
+        user.setPasswordHash(encoder.encode(request.password()));
+        users.save(user);
     }
 
     private static StaffDto toDto(User u) {
