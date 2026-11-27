@@ -72,13 +72,12 @@ function render(r) {
     document.getElementById("report").hidden = false;
 }
 
-/** Story 10: download the report the form is set to as a CSV file. */
-async function exportCsv() {
-    const button = document.getElementById("export-csv");
+/** Story 10: download the report the form is set to as a CSV or PDF file. */
+async function exportReport(button, path, fallbackName) {
     messageEl.hidden = true;
     button.disabled = true;
     try {
-        const res = await fetch("/api/reports/sales/export?" + reportParams());
+        const res = await fetch(path + "?" + reportParams());
         if (res.status === 401) {
             location.href = "/login.html";
             return;
@@ -90,7 +89,7 @@ async function exportCsv() {
         const match = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") || "");
         const link = document.createElement("a");
         link.href = URL.createObjectURL(await res.blob());
-        link.download = match ? match[1] : "sales-report.csv";
+        link.download = match ? match[1] : fallbackName;
         document.body.append(link);
         link.click();
         link.remove();
@@ -104,7 +103,10 @@ async function exportCsv() {
 }
 
 formEl.addEventListener("submit", e => { e.preventDefault(); loadReport(); });
-document.getElementById("export-csv").addEventListener("click", exportCsv);
+const csvButton = document.getElementById("export-csv");
+const pdfButton = document.getElementById("export-pdf");
+csvButton.addEventListener("click", () => exportReport(csvButton, "/api/reports/sales/export", "sales-report.csv"));
+pdfButton.addEventListener("click", () => exportReport(pdfButton, "/api/reports/sales/export/pdf", "sales-report.pdf"));
 // Changing the grouping resets to that grouping's default range
 document.getElementById("period").addEventListener("change", () => {
     document.getElementById("from").value = "";
